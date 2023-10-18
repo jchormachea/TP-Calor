@@ -6,7 +6,7 @@ clear; clc; close all
 %% Ejercicio 1
 
 %eleccion de refinado
-nVolumes = 10;
+nVolumes = 100;
 
 %declaración de variables
 Tprueba = 25;
@@ -52,8 +52,9 @@ T = Qt\B;
 %print de datos
 fprintf('Ejercicio 1.\n')
 fprintf('nivel de refinamiento: %d\n', nVolumes)
-fprintf('Temperaturas: \n')
-T(1)
-T(end)
-
-
+% fprintf('Temperaturas: \n')
+x = linspace(0,L,nVolumes);
+y = ones(1,length(x));
+c = full(T);
+% patch(x,y,c,'EdgeColor','interp','Marker','o','MarkerFaceColor','flat');
+patch(x,y,c,'EdgeColor','interp');
