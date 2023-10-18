@@ -147,7 +147,7 @@ title('Campo de Temperaturas numérico')
 [X, Y] = meshgrid(0:0.01:L, 0:0.01:W);
 Tan = 0;
 for n = 1:100
-    Tan = Tan+2*qin*L/(K*pi^2)*((1+(-1)^(n+1))/(n^2*cosh(n*pi*W/L))).*sin(n*pi*X/L).*sin(n*pi*Y/L); 
+    Tan = Tan+2*qin*L/(K*pi^2)*((1+(-1)^(n+1))/(n^2*cosh(n*pi*W/L))).*sin(n*pi*X/L).*sinh(n*pi*Y/L); 
 end
 Tan = Tan+T1;
 figure
