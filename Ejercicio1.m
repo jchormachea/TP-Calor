@@ -4,7 +4,7 @@
 clear; clc; close all
 
 %eleccion de refinado
-nVolumes = 100;
+nVolumes = 1000; % el minimo es 3
 
 %declaración de variables
 Tprueba = 25;
@@ -58,5 +58,5 @@ c = full(T);
 patch(x,y,c,'EdgeColor','interp','LineWidth',4);
 c = colorbar;
 ylabel(c,'Temp (°C)','Rotation', 270)
-c.Label.Position(1) = 3;
+c.Label.Position(1) = 4;
 title('Temperaturas de la barra')
