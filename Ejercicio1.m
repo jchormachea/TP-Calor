@@ -3,8 +3,6 @@
 % 2D -T(i+1,j)-T(i-1,j)-T(i,j+1)-T(i,j-1)+4*T(i,j) = 0
 clear; clc; close all
 
-%% Ejercicio 1
-
 %eleccion de refinado
 nVolumes = 100;
 
@@ -57,4 +55,8 @@ x = linspace(0,L,nVolumes);
 y = ones(1,length(x));
 c = full(T);
 % patch(x,y,c,'EdgeColor','interp','Marker','o','MarkerFaceColor','flat');
-patch(x,y,c,'EdgeColor','interp');
+patch(x,y,c,'EdgeColor','interp','LineWidth',4);
+c = colorbar;
+ylabel(c,'Temp (°C)','Rotation', 270)
+c.Label.Position(1) = 3;
+title('Temperaturas de la barra')
