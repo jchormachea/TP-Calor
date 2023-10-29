@@ -182,15 +182,19 @@ qwest = K/(0.5*dx)*(T(westLine)-T1);
 Tfield = reshape(full(T),nVolumesHeight, nVolumesLength); %para el contourf de temperatura
 Tsup = qin*dy*0.5+K*T(nVolumesHeight:nVolumesHeight:nVolumes); %Tsuperior MATLAB
 TsupAn = qin*0.5*dy+K*Tan(end,:);%Tsuperior Analitica
+
+%amplío matrices a todo el dominio
 T1vec = ones(1,nVolumesLength)*T1; 
 Tfield = [T1vec;Tfield];
 Tfield = [Tfield;Tsup'];
 Tfield = [[T1vec T1 T1]',Tfield];
 Tfield = [Tfield, [T1vec T1 T1]'];
+
 Tan = [T1vec;Tan];
 Tan = [Tan;TsupAn];
 Tan = [[T1vec T1 T1]',Tan];
 Tan = [Tan, [T1vec T1 T1]'];
+
 [Xplot, Yplot] = meshgrid([0 0.5*dx:dx:(L-0.5*dx) L],[0 0.5*dy:dy:(W-0.5*dy) W]);
 
 %% plots

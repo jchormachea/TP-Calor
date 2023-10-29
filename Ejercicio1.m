@@ -47,9 +47,11 @@ B(:) = B(:)-h*As*Tamb*dx; %Convección de calor
 
 %solver
 T = Qt\B;
+T = full(T);
+T = [To;T;T(end)]; %agrego las puntas de la barra
 
 %% solucion teórica
-x = linspace(0,L,nVolumes);
+x = [0 0.5*dx:dx:(L-0.5*dx) L];
 P = 2*pi*r; %perímetro
 m = sqrt((h*P)/(K*A));
 Tteo = (((To-Tamb-q/(K*m^2))/(1+exp(2*m*L)))*(exp(m*x)+exp(2*m*L)*exp(-m*x))+q/(K*m^2)+Tamb)';
@@ -57,7 +59,7 @@ Tteo = (((To-Tamb-q/(K*m^2))/(1+exp(2*m*L)))*(exp(m*x)+exp(2*m*L)*exp(-m*x))+q/(
 %% flujo de calor
 qf(nVolumes) = 0; %flujo de calor
 
-for i = 1:nVolumes
+for i = 2:size(T,1)
     
     if i == 1
         q(i) = K/(0.5*dx)*(T(i)-To);
@@ -74,7 +76,6 @@ fprintf('nivel de refinamiento: %d\n', nVolumes)
 fprintf('Temperaturas: \n')
 
 y = ones(1,length(x));
-T = full(T);
 
 figure
 plot(x,T,'b')
@@ -94,7 +95,9 @@ ylabel('Flujo [W/m^2]')
 
 figure
 patch(x,y,T,'EdgeColor','interp','LineWidth',5);
+% pcolor(x,y,T);
 c = colorbar;
+colormap('jet')
 ylabel(c,'Temp (°C)','Rotation', 270)
 c.Label.Position(1) = 4;
 title('Temperaturas de la barra')
