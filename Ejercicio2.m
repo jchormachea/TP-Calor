@@ -1,25 +1,25 @@
-%% Ejercicio2 TP HT
+%% Ejercicio2 TP HT Hormachea 61439 - Nieto 61459
 % 1D t(i+1) -2Ti+T(i-1) = 0
 % 2D -T(i+1,j)-T(i-1,j)-T(i,j+1)-T(i,j-1)+4*T(i,j) = 0
 clear; clc; close all
 tic
 %elección de refinado
-nVolumesLength = 100; %Volumenes en longitud(minimo 3)
-nVolumesHeight = 100; %Volumenes en altura(minimo 3)
+nVolumesLength = 30; %Volumenes en longitud(minimo 3)
+nVolumesHeight = 30; %Volumenes en altura(minimo 3)
 nVolumes = nVolumesLength*nVolumesHeight;
 
 %declaración de variables
 L = 1; W = 1; %m
 K = 1; %W/mK
 qin = 30; %W/m2
-T1 = 10; %°C
+T1 = 20; %°C
 
 dx = L/nVolumesLength;
 dy = W/nVolumesHeight;
 
 Qt = sparse(nVolumes,nVolumes); %temperatures equation matrix
 
-% numeración de los vols de control(creo que es así)
+% numeración de los vols de control
 % 3| 6| 9
 % 2| 5| 8
 % 1| 4| 7
@@ -135,37 +135,111 @@ sideNorth = nVolumesHeight:nVolumesHeight:nVolumes;
 B(sideNorth) = B(sideNorth)+qin*dx^2*dy/K; %pared Norte flujo fijo
 sideEast = nVolumes-nVolumesHeight+1:nVolumes;
 B(sideEast) = B(sideEast)+dy^2*T1*2; %pared Este T fija
+
 %solver
 T = Qt\B;
+T = full(T);
 
-solucionNumerica = toc
+solucionNumerica = toc;
 
 %% Resolucion analitica
 
-[X, Y] = meshgrid(0:0.01:L, 0:0.01:W);
-Tan = 0;
+
+[X, Y] = meshgrid(0.5*dx:dx:(L-0.5*dx),0.5*dy:dy:(W-0.5*dy));
+
+Tan = 0; %temperatura analítica
 for n = 1:100
     Tan = Tan+2*qin*L/(K*pi^2)*((1+(-1)^(n+1))/(n^2*cosh(n*pi*W/L))).*sin(n*pi*X/L).*sinh(n*pi*Y/L); 
 end
 Tan = Tan+T1;
-solucionAnalitica = toc
+solucionAnalitica = toc;
+
+%% convergencia 
+ 
+% numeración de los vols de control
+% 3| 6| 9
+% 2| 5| 8
+% 1| 4| 7
+
+ncol = ceil(nVolumesLength/2); %fix(nVolumesLength/2)+mod(nVolumesLength,2);
+centerLine = (ncol-1)*nVolumesHeight+1:1:((ncol-1)*nVolumesHeight+nVolumesHeight); %volumenes de la col del centro
+ECM = 0;
+TECM = T(centerLine); %Temperaturas de MATLAB
+sz = size(Tan);
+y = fix(sz(1)/2)+mod(sz(1),2);%col del medio de Tan
+TanECM = Tan(1:sz(2),y);
+ECM = sqrt(sum((TECM-TanECM).^2)/nVolumesHeight);
+
+%% flujos en extremos
+
+%flujo sur
+southLine = 1:nVolumesHeight:nVolumes; %volumenes cara sur
+westLine = 1:nVolumesHeight;
+qsouth = K/(0.5*dy)*(T(southLine)-T1);
+qwest = K/(0.5*dx)*(T(westLine)-T1);
+
+%% post procesado para plots
+Tfield = reshape(full(T),nVolumesHeight, nVolumesLength); %para el contourf de temperatura
+Tsup = qin*dy*0.5+K*T(nVolumesHeight:nVolumesHeight:nVolumes); %Tsuperior MATLAB
+TsupAn = qin*0.5*dy+K*Tan(end,:);%Tsuperior Analitica
+T1vec = ones(1,nVolumesLength)*T1; 
+Tfield = [T1vec;Tfield];
+Tfield = [Tfield;Tsup'];
+Tfield = [[T1vec T1 T1]',Tfield];
+Tfield = [Tfield, [T1vec T1 T1]'];
+Tan = [T1vec;Tan];
+Tan = [Tan;TsupAn];
+Tan = [[T1vec T1 T1]',Tan];
+Tan = [Tan, [T1vec T1 T1]'];
+[Xplot, Yplot] = meshgrid([0 0.5*dx:dx:(L-0.5*dx) L],[0 0.5*dy:dy:(W-0.5*dy) W]);
 
 %% plots
-Tfield = reshape(full(T),nVolumesHeight, nVolumesLength);
+
+
+%error cuadrático medio
+ECM
+nVolumes
+
+ECMval = [9 0.4203; 16 0.2521; 25 0.1563; 36 0.1112; 49 0.0805; 81 0.0488; 144 0.0277; 225 0.0177; 400 0.01; 625 0.0064]; %900 0.0044];
+plot(ECMval(:,1),ECMval(:,2))
+grid on; hold on
+xlabel('Número de Volúmenes')
+ylabel('ECM')
+title('Error cuadrático Medio')
+xticks(ECMval(:,1))
+xlim([0 ECMval(end,1)])
+
+%flujo de calor Oeste
 figure
-contourf(Tfield,'linecolor','none')
+plot(linspace(0,W,nVolumesHeight),qwest,'r')
+grid on
+xlabel('posicion [m]')
+ylabel('flujo de calor [W/m^2]')
+title('flujo de calor en la pared Oeste')
+
+%flujo de calor Sur
+figure
+plot(linspace(0,L,nVolumesLength),qsouth,'r')
+grid on
+xlabel('posicion [m]')
+ylabel('flujo de calor [W/m^2]')
+title('flujo de calor en la pared Sur')
+
+
+%campo de temperatura numérico
+figure
+contourf(Xplot,Yplot,Tfield,'linecolor','none')
 colormap('jet')
 c = colorbar;
 ylabel(c,'Temp (°C)','Rotation', 270)
 c.Label.Position(1) = 4;
 title('Campo de Temperaturas numérico')
-plotsolucion = toc
+
+%campo de temperatura analítico
 figure
-contourf(X,Y,Tan,'linecolor','none')
-% set(cf,hf,'EdgeLine', 'None')
+contourf(Xplot,Yplot,Tan,'linecolor','none')
 title('Campo de Temperaturas Analítico')
 colormap('jet')
 c = colorbar;
 ylabel(c,'Temp (°C)','Rotation', 270)
 c.Label.Position(1) = 4;
-plotAnalitica = toc
