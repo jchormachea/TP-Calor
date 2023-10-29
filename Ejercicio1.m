@@ -1,12 +1,13 @@
 %% Ejercicio1 TP HT Hormachea 61439 - Nieto 61459
-% este codigo resuelve el ejercicio 1 del tp de transferencia de calor.
-% este código fue realizado con matlab R2020a, el uso de otra versión del
-% código puede generar que no corra. 
+% Este código resuelve el ejercicio 1 del tp de transferencia de calor.
+% Este código fue realizado con matlab R2020a, el uso de otra puede generar que no corra. 
 %% incializar
 clear; clc; close all
 
+%% preprocesado
+
 %eleccion de refinado
-nVolumes = 1000; % el minimo es 3
+nVolumes = 10; % el minimo es 3
 
 %declaración de variables
 Tamb = 25; To = 0; %°C
@@ -18,9 +19,9 @@ r = sqrt(A/pi);%[m]
 
 dx = L/nVolumes; %[m]
 As = 2*pi*r*dx; %area superficial[m2]
-V = pi*r^2*dx; %volumen de cada volumen finito
+V = pi*r^2*dx; %[m^3]volumen de cada volumen finito
 
-%armado de matriz de ecuaciones
+% armado de matriz de ecuaciones
 Qt = sparse(nVolumes,nVolumes); %temperatures equation matrix
 
 for iVol = 1:nVolumes
@@ -45,28 +46,28 @@ B(end) = 0; %cond de borde flujo nulo(aislado)
 B(:) = B(:)-q*V*dx; %Generación de energía interna
 B(:) = B(:)-h*As*Tamb*dx; %Convección de calor
 
-%solver
+%% Solver
 T = Qt\B;
 T = full(T);
 T = [To;T;T(end)]; %agrego las puntas de la barra
 
-%% solucion teórica
+%% Post procesado
+%solucion teórica
 x = [0 0.5*dx:dx:(L-0.5*dx) L];
 P = 2*pi*r; %perímetro
 m = sqrt((h*P)/(K*A));
 Tteo = (((To-Tamb-q/(K*m^2))/(1+exp(2*m*L)))*(exp(m*x)+exp(2*m*L)*exp(-m*x))+q/(K*m^2)+Tamb)';
 
-%% flujo de calor
-qf(nVolumes) = 0; %flujo de calor
+% flujo de calor
+qf(nVolumes) = 0; %flujo de calor [W/m^2]
 
 for i = 2:size(T,1)
     
     if i == 1
-        q(i) = K/(0.5*dx)*(T(i)-To);
+        qf(i) = K/(0.5*dx)*(T(i)-T(i-1));
     else
-        q(i) = K/dx*(T(i)-T(i-1));
-    end   
-    
+        qf(i) = K/dx*(T(i)-T(i-1));
+    end
 end
 
 
@@ -74,8 +75,6 @@ end
 fprintf('Ejercicio 1.\n')
 fprintf('nivel de refinamiento: %d\n', nVolumes)
 fprintf('Temperaturas: \n')
-
-y = ones(1,length(x));
 
 figure
 plot(x,T,'b')
@@ -87,18 +86,8 @@ xlabel('posicion [m]')
 ylabel('Temperatura [°C]')
 
 figure
-plot(x,q,'r')
+plot(x,qf,'r')
 grid on
 title('Flujo de calor')
 xlabel('posicion [m]')
 ylabel('Flujo [W/m^2]')
-
-figure
-patch(x,y,T,'EdgeColor','interp','LineWidth',5);
-% pcolor(x,y,T);
-c = colorbar;
-colormap('jet')
-ylabel(c,'Temp (°C)','Rotation', 270)
-c.Label.Position(1) = 4;
-title('Temperaturas de la barra')
-xlabel('posicion [m]')

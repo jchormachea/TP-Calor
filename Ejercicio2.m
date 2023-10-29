@@ -1,11 +1,16 @@
 %% Ejercicio2 TP HT Hormachea 61439 - Nieto 61459
-% 1D t(i+1) -2Ti+T(i-1) = 0
-% 2D -T(i+1,j)-T(i-1,j)-T(i,j+1)-T(i,j-1)+4*T(i,j) = 0
+% Este código resuelve el ejercicio 2 del tp de transferencia de calor.
+% Este código fue realizado con matlab R2020a, el uso de otra versión puede generar que no corra. 
+%% incializar
 clear; clc; close all
-tic
+
+%% preprocesado
+
 %elección de refinado
-nVolumesLength = 30; %Volumenes en longitud(minimo 3)
-nVolumesHeight = 30; %Volumenes en altura(minimo 3)
+refinado = 5; %(minimo 3)
+
+nVolumesLength = refinado; 
+nVolumesHeight = refinado; 
 nVolumes = nVolumesLength*nVolumesHeight;
 
 %declaración de variables
@@ -124,7 +129,6 @@ for iVolume = 1:nVolumes
     end
 end
 
-% full(Qt)
 %boundary conditions
 B = sparse(nVolumes,1); %el elemento B(i) corresponde a la ecuacion del vol de control en Qt(i,i)
 sideWest = 1:nVolumesHeight;
@@ -136,13 +140,14 @@ B(sideNorth) = B(sideNorth)+qin*dx^2*dy/K; %pared Norte flujo fijo
 sideEast = nVolumes-nVolumesHeight+1:nVolumes;
 B(sideEast) = B(sideEast)+dy^2*T1*2; %pared Este T fija
 
-%solver
+%% solver
 T = Qt\B;
 T = full(T);
 
 solucionNumerica = toc;
 
-%% Resolucion analitica
+%% Post procesado
+%Resolucion analitica
 
 
 [X, Y] = meshgrid(0.5*dx:dx:(L-0.5*dx),0.5*dy:dy:(W-0.5*dy));
@@ -154,7 +159,7 @@ end
 Tan = Tan+T1;
 solucionAnalitica = toc;
 
-%% convergencia 
+%convergencia 
  
 % numeración de los vols de control
 % 3| 6| 9
@@ -170,13 +175,9 @@ y = fix(sz(1)/2)+mod(sz(1),2);%col del medio de Tan
 TanECM = Tan(1:sz(2),y);
 ECM = sqrt(sum((TECM-TanECM).^2)/nVolumesHeight);
 
-%% flujos en extremos
 
-%flujo sur
-southLine = 1:nVolumesHeight:nVolumes; %volumenes cara sur
-westLine = 1:nVolumesHeight;
-qsouth = K/(0.5*dy)*(T(southLine)-T1);
-qwest = K/(0.5*dx)*(T(westLine)-T1);
+
+
 
 %% post procesado para plots
 Tfield = reshape(full(T),nVolumesHeight, nVolumesLength); %para el contourf de temperatura
@@ -195,6 +196,11 @@ Tan = [Tan;TsupAn];
 Tan = [[T1vec T1 T1]',Tan];
 Tan = [Tan, [T1vec T1 T1]'];
 
+%flujos en extremos
+%flujo sur
+qsouth = K/(0.5*dy)*(Tfield(2,:)-Tfield(1,:));
+qwest = K/(0.5*dx)*(Tfield(:,2)-Tfield(:,1));
+
 [Xplot, Yplot] = meshgrid([0 0.5*dx:dx:(L-0.5*dx) L],[0 0.5*dy:dy:(W-0.5*dy) W]);
 
 %% plots
@@ -208,14 +214,14 @@ ECMval = [9 0.4203; 16 0.2521; 25 0.1563; 36 0.1112; 49 0.0805; 81 0.0488; 144 0
 plot(ECMval(:,1),ECMval(:,2))
 grid on; hold on
 xlabel('Número de Volúmenes')
-ylabel('ECM')
+ylabel('ECM[°C]')
 title('Error cuadrático Medio')
-xticks(ECMval(:,1))
+% xticks(ECMval(:,1))
 xlim([0 ECMval(end,1)])
 
 %flujo de calor Oeste
 figure
-plot(linspace(0,W,nVolumesHeight),qwest,'r')
+plot([0 0.5*dy:dy:(W-0.5*dy) W],qwest,'r')
 grid on
 xlabel('posicion [m]')
 ylabel('flujo de calor [W/m^2]')
@@ -223,7 +229,8 @@ title('flujo de calor en la pared Oeste')
 
 %flujo de calor Sur
 figure
-plot(linspace(0,L,nVolumesLength),qsouth,'r')
+
+plot([0 0.5*dx:dx:(L-0.5*dx) L],qsouth,'r')
 grid on
 xlabel('posicion [m]')
 ylabel('flujo de calor [W/m^2]')
@@ -238,12 +245,3 @@ c = colorbar;
 ylabel(c,'Temp (°C)','Rotation', 270)
 c.Label.Position(1) = 4;
 title('Campo de Temperaturas numérico')
-
-%campo de temperatura analítico
-figure
-contourf(Xplot,Yplot,Tan,'linecolor','none')
-title('Campo de Temperaturas Analítico')
-colormap('jet')
-c = colorbar;
-ylabel(c,'Temp (°C)','Rotation', 270)
-c.Label.Position(1) = 4;
